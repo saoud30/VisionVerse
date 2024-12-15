@@ -13,6 +13,8 @@
 /out/
 /.bolt/
 
+
+/.bolt/
 # production
 /build
 
