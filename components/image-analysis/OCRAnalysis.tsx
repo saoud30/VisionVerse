@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Upload } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useToast } from '@/components/ui/use-toast';
-import { createWorker } from 'tesseract.js';
+import { createWorker, Worker, RecognizeResult } from 'tesseract.js';
 
 export function OCRAnalysis() {
   const [image, setImage] = useState<string | null>(null);
@@ -32,46 +32,45 @@ export function OCRAnalysis() {
     setIsProcessing(true);
     setProgress(0);
 
+    let worker: Worker | null = null; // Declare worker outside of try block
+
     try {
-      const worker = await createWorker();
-      
-      // Configure worker
-      await worker.loadLanguage('eng');
-      await worker.initialize('eng');
-      
-      // Recognize text
-      const { data: { text } } = await worker.recognize(image);
-      
-      if (!text.trim()) {
+      worker = await createWorker('eng'); // Create worker with language
+      const { data } = await worker.recognize(image);
+
+      if (!data.text.trim()) {
         throw new Error('No text was found in the image');
       }
 
-      setExtractedText(text);
+      setExtractedText(data.text);
       toast({
         title: 'Success',
         description: 'Text extracted successfully!',
         duration: 3000,
       });
-
-      await worker.terminate();
     } catch (error) {
       console.error('Error during OCR:', error);
       toast({
         title: 'Error',
-        description: 'Failed to extract text. Please try a different image or check if it contains readable text.',
+        description:
+          'Failed to extract text. Please try a different image or check if it contains readable text.',
         variant: 'destructive',
         duration: 5000,
       });
       setExtractedText('');
+    } finally {
+      if(worker){
+          await worker.terminate(); // Terminate worker in finally block
+      }
+      setIsProcessing(false);
     }
-    setIsProcessing(false);
   };
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center gap-4">
-        <label 
-          htmlFor="ocr-image-upload" 
+        <label
+          htmlFor="ocr-image-upload"
           className="glass-card p-8 w-full max-w-xl cursor-pointer hover:border-purple-500/50 transition-colors"
         >
           <div className="flex flex-col items-center gap-4">
@@ -91,9 +90,9 @@ export function OCRAnalysis() {
         {image && (
           <div className="w-full max-w-xl space-y-4">
             <div className="relative">
-              <img 
-                src={image} 
-                alt="Uploaded image" 
+              <img
+                src={image}
+                alt="Uploaded image"
                 className="w-full rounded-lg border border-white/10"
               />
               {isProcessing && (
@@ -105,8 +104,8 @@ export function OCRAnalysis() {
                 </div>
               )}
             </div>
-            <Button 
-              onClick={extractText} 
+            <Button
+              onClick={extractText}
               className="w-full glass-button"
               disabled={isProcessing}
             >
