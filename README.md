@@ -9,6 +9,10 @@
   </p>
 </div>
 
+<div align="center">
+  <img src="baker.png" alt="Flixir Screenshot">
+</div>
+
 ## ✨ Features
 
 ### 🎨 AI Image Generation
